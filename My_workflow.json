@@ -1,0 +1,160 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            },
+            {
+              "daysInterval": {},
+              "triggerAtMinute": {}
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4a90d05e-1712-4fc5-8605-b5531eb4051d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1hU6duzd7j3YBpyV9Wq8xAQklUY2LYQw-BJZs4VTsnHE/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hU6duzd7j3YBpyV9Wq8xAQklUY2LYQw-BJZs4VTsnHE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "4f848e1b-ed8e-4bd2-8dd8-bf64316fe79b",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "w8hM17uH9vefHwqp",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst mm = String(today.getMonth() + 1).padStart(2, '0');\nconst dd = String(today.getDate()).padStart(2, '0');\nconst mmdd = `${mm}/${dd}`;\n\nconsole.log(\"Today's date (MM/DD):\", mmdd);\n\nconst filtered = items.filter(item => {\n  let rawDate = item.json.Date || item.json.date || \"\";\n  rawDate = String(rawDate).trim();\n\n  let itemDate;\n\n  try {\n    const parsedDate = new Date(rawDate);\n    if (!isNaN(parsedDate)) {\n      const itemMM = String(parsedDate.getMonth() + 1).padStart(2, '0');\n      const itemDD = String(parsedDate.getDate()).padStart(2, '0');\n      itemDate = `${itemMM}/${itemDD}`;\n    } else {\n      itemDate = rawDate.slice(0, 5); // fallback\n    }\n  } catch (err) {\n    itemDate = rawDate.slice(0, 5); // fallback\n  }\n\n  console.log(`Checking: ${item.json.Name} → ${itemDate}`);\n  return itemDate === mmdd;\n});\n\nconsole.log(\"Matching birthdays found:\", filtered.length);\n\n// Optional: always return a dummy item for testing if no match found\nif (filtered.length === 0) {\n  filtered.push({\n    json: {\n      Name: \"Test User\",\n      Date: mmdd + \"/2025\"\n    }\n  });\n}\n\nreturn filtered;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "8dd9c6f0-8656-40b3-b6e4-f75551a2d6bf",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/ACc9350114d756d83cc32b59c1e88467/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "whatsapp:+14155238886"
+            },
+            {
+              "name": "To",
+              "value": "whatsapp:+919619160767"
+            },
+            {
+              "name": "Body",
+              "value": "=🎉 Reminder: It's {{$json[\"Name\"]}}'s birthday today!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "af503055-591e-4de6-a949-5b2ae0a4e9da",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "tlqLbfCnTQxWPOG9",
+          "name": "Unnamed credential 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "683afc0c-3dd3-49d4-ad44-85e992f49075",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dec2838fed586658eaef8244e732fe63a8632fbf12b0d68452e9b4ff340098b6"
+  },
+  "id": "KuxgGu27BuOrzr9z",
+  "tags": []
+}
